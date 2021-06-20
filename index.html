@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+
+        html {
+            font-size: 20px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        input {
+            -moz-appearance: textfield;
+            font-size: 20px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .inputShortNum {
+            width: 30px;
+            text-align: right;
+        }
+        #gameCount {
+            width: 100px;
+            text-align: left;
+        }
+
+        #output > span {
+            color: #CC0000;
+        }
+
+    </style>
+    <title>Mad probabilities</title>
+</head>
+<body>
+    <div id="root">
+        <div id="input">
+            <input type="number" id="player1Count" class="inputShortNum">
+            <label for="player1Count">d6 в атаке</label><br>
+
+            <input type="number" id="player2Count" class="inputShortNum">
+            <label for="player2Count">d6 в защите</label><br>
+
+            Расчёт выигрыша ровно
+            <input type="number" id="extremumCount" class="inputShortNum">
+            <label for="extremumCount">d6</label><br>
+
+            Расчёт выигрыша как минимум
+            <input type="number" id="atLeastCount" class="inputShortNum">
+            <label for="atLeastCount">d6</label><br>
+
+            <label for="gameCount">Количество партий</label><br>
+            <input type="number" id="gameCount" value="100000">
+
+            <button onclick="calculateAndShowRes()">Submit</button>
+            <br><br><hr>
+        </div>
+
+        <div id="output">
+            <!-- Количество d6 кубиков Игрока 1: <span id="player1CountSpan"></span><br>
+            Количество d6 кубиков Игрока 2: <span id="player2CountSpan"></span><br> -->
+            Игрок1 бьёт Игрока2 ровно <span id="extremumCount1Span"></span> раза c вероятностью: <span id="damageExtremumProbSpan"></span><br>
+            Игрок1 бьёт Игрока2 как минимум <span id="extremumCount2Span"></span> раз(a) c вероятностью: <span id="damageAtLeastProbSpan"></span><br>
+            <br>
+            Средний урон Ироку 2: <span id="meanDamageSpan"></span><br>
+            Средний перегрев Игрока 1: <span id="meanOverheatingSpan"></span>
+        </div>
+    </div>
+    <script>
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+        }
+
+        function generatePlayer(playerCount){
+            const player = [];
+            for (let i = 0; i < playerCount; i++) {
+                player.push(getRandomInt(1, 7));
+            }
+            return player;
+        }
+
+        function showRes(player1Count, player2Count, extremumCount, atLeastCount, gameCount, extremumRes, atLeastRes, allDamage) {
+            document.getElementById('extremumCount1Span').textContent = extremumCount;
+            document.getElementById('extremumCount2Span').textContent = extremumCount;
+            document.getElementById('damageExtremumProbSpan').textContent = extremumRes/gameCount;
+            document.getElementById('damageAtLeastProbSpan').textContent = atLeastRes/gameCount;
+            document.getElementById('meanDamageSpan').textContent = allDamage/gameCount;
+            document.getElementById('meanOverheatingSpan').textContent = player1Count - allDamage/gameCount;
+        }
+
+        function calculateAndShowRes() {
+            const player1Count = document.getElementById('player1Count').value;
+            const player2Count = document.getElementById('player2Count').value;
+            const extremumCount = document.getElementById('extremumCount').value;
+            const atLeastCount = document.getElementById('atLeastCount').value;
+            const gameCount = document.getElementById('gameCount').value;
+
+            if (gameCount > 10000000) {
+                alert('Слишком большое число партий!')
+                return
+            }
+
+            let extremumRes = 0;
+            let atLeastRes = 0;
+            let allDamage = 0;
+
+            for (let r = 0; r < gameCount; r++) {
+                let player1 = generatePlayer(player1Count);
+                let player2 = generatePlayer(player2Count);
+                player1.sort();
+                player2.sort();
+
+                alreadyWons = []
+
+                for (let i = 0; i < player1.length; i++) {
+                    for (let j = 0; j < player2.length; j++) {
+                        if (player1[i] > player2[j] && !alreadyWons.includes(j)) {
+                            alreadyWons.push(j);
+                            break;
+                        }
+                    }
+                }
+
+                allDamage += alreadyWons.length
+
+                if (alreadyWons.length == extremumCount)
+                    extremumRes++
+
+                if (alreadyWons.length >= extremumCount)
+                    atLeastRes++
+            }
+            showRes(player1Count, player2Count, extremumCount, atLeastCount, gameCount, extremumRes, atLeastRes, allDamage);
+        };
+    </script>
+</body>
+</html>
