@@ -34,6 +34,7 @@
             color: #CC0000;
         }
 
+
     </style>
     <title>Mad probabilities</title>
 </head>
@@ -46,13 +47,8 @@
             <input type="number" id="player2Count" class="inputShortNum">
             <label for="player2Count">d6 в защите</label><br>
 
-            Расчёт выигрыша ровно
-            <input type="number" id="extremumCount" class="inputShortNum">
-            <label for="extremumCount">d6</label><br>
-
-            Расчёт выигрыша как минимум
-            <input type="number" id="atLeastCount" class="inputShortNum">
-            <label for="atLeastCount">d6</label><br>
+            Желаемый урон
+            <input type="number" id="extremumCount" class="inputShortNum"><br><br>
 
             <label for="gameCount">Количество партий</label><br>
             <input type="number" id="gameCount" value="100000">
@@ -62,16 +58,34 @@
         </div>
 
         <div id="output">
-            <!-- Количество d6 кубиков Игрока 1: <span id="player1CountSpan"></span><br>
-            Количество d6 кубиков Игрока 2: <span id="player2CountSpan"></span><br> -->
-            Игрок1 бьёт Игрока2 ровно <span id="extremumCount1Span"></span> раза c вероятностью: <span id="damageExtremumProbSpan"></span><br>
-            Игрок1 бьёт Игрока2 как минимум <span id="extremumCount2Span"></span> раз(a) c вероятностью: <span id="damageAtLeastProbSpan"></span><br>
+            Средний урон: <span id="meanDamageSpan"></span><br>
+            Средний перегрев: <span id="meanOverheatingSpan"></span><br>
             <br>
-            Средний урон Ироку 2: <span id="meanDamageSpan"></span><br>
-            Средний перегрев Игрока 1: <span id="meanOverheatingSpan"></span>
+            Вероятность нанести ровно <text id="extremumCountSpan"></text> <text id="damageWord1"></text>: <span id="damageExtremumProbSpan"></span><br>
+            Вероятность нанести как минимум <text id="atLeastCountSpan"></text> <text id="damageWord2"></text>: <span id="damageAtLeastProbSpan"></span><br>
         </div>
     </div>
     <script>
+        document.getElementById('root').addEventListener('keyup', (e) => {
+            if (e.keyCode === 13) {
+                calculateAndShowRes();
+            }
+        });
+
+        function isInteger(n) {
+            const s = String(n);
+            return parseInt(n) == parseFloat(n);
+        }
+
+        function getDamageNameByNumber(number) {
+            const s = String(number);
+            if (s.slice(-1) == '1' && s.slice(-2) != 11) {
+                return 'урон';
+            } else {
+                return 'урона';
+            }
+        }
+
         function getRandomInt(min, max) {
             min = Math.ceil(min);
             max = Math.floor(max);
@@ -86,9 +100,11 @@
             return player;
         }
 
-        function showRes(player1Count, player2Count, extremumCount, atLeastCount, gameCount, extremumRes, atLeastRes, allDamage) {
-            document.getElementById('extremumCount1Span').textContent = extremumCount;
-            document.getElementById('extremumCount2Span').textContent = extremumCount;
+        function showRes(player1Count, player2Count, extremumCount, gameCount, extremumRes, atLeastRes, allDamage) {
+            document.getElementById('extremumCountSpan').textContent = extremumCount;
+            document.getElementById('atLeastCountSpan').textContent = extremumCount;
+            document.getElementById('damageWord1').textContent = getDamageNameByNumber(extremumCount);
+            document.getElementById('damageWord2').textContent = getDamageNameByNumber(extremumCount);
             document.getElementById('damageExtremumProbSpan').textContent = extremumRes/gameCount;
             document.getElementById('damageAtLeastProbSpan').textContent = atLeastRes/gameCount;
             document.getElementById('meanDamageSpan').textContent = allDamage/gameCount;
@@ -98,13 +114,28 @@
         function calculateAndShowRes() {
             const player1Count = document.getElementById('player1Count').value;
             const player2Count = document.getElementById('player2Count').value;
-            const extremumCount = document.getElementById('extremumCount').value;
-            const atLeastCount = document.getElementById('atLeastCount').value;
+            let extremumCount = document.getElementById('extremumCount').value;
             const gameCount = document.getElementById('gameCount').value;
 
+            if (String(player1Count).length == 0 || String(player2Count).length == 0 || String(extremumCount).length == 0 || String(gameCount).length == 0) {
+                alert('Введите все числа');
+            }
+
             if (gameCount > 10000000) {
-                alert('Слишком большое число партий!')
-                return
+                alert('Слишком большое число партий!');
+                return;
+            }
+
+            if (extremumCount < 0) {
+                alert('Ачивка: Тестировщик. Уровень 1.\n Желаемый урон не может быть меньше нуля');
+                return;
+            }
+
+            if (!isInteger(extremumCount)) {
+                alert('Ачивка: Тестировщик. Уровень 2.\n Желаемый урон не может дробным');
+                return;
+            } else {
+                extremumCount = parseInt(extremumCount);
             }
 
             let extremumRes = 0;
@@ -136,7 +167,7 @@
                 if (alreadyWons.length >= extremumCount)
                     atLeastRes++
             }
-            showRes(player1Count, player2Count, extremumCount, atLeastCount, gameCount, extremumRes, atLeastRes, allDamage);
+            showRes(player1Count, player2Count, extremumCount, gameCount, extremumRes, atLeastRes, allDamage);
         };
     </script>
 </body>
